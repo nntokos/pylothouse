@@ -3,6 +3,7 @@
 workspace = true
 members = [
     "packages/pylothouse-core",
+    "packages/pylothouse-nicefigs",
     "packages/pylothouse",  # metapackage
 ]
 

@@ -22,8 +22,11 @@ dependencies = [
 dev = ["pytest", "pytest-mpl", "ruff", "pre-commit"]
 
 [project.scripts]
-nicefigs = "pylothouse_nicefigs.cli:main"
+nicefigs = "pylothouse.nicefigs.cli:main"
+
+[tool.setuptools.package-dir]
+"" = "src"
 
 [tool.setuptools.packages.find]
-where = ["./"]
-include = ["pylothouse_nicefigs*"]
+where = ["src"]
+include = ["pylothouse*", "nicefigs*"]

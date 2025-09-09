@@ -1,3 +1,3 @@
 def test_import():
-    import pylothouse_nicefigs as nf
+    import nicefigs as nf
     assert hasattr(nf, "render")

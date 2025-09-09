@@ -1,14 +1,16 @@
 # pylothouse (meta-package)
 
 Meta-package that installs the full pylothouse suite of subpackages:
+- pylothouse-core
 - pylothouse-cv
 - pylothouse-dash
 - pylothouse-math
 - pylothouse-utils
 - pylothouse-xr
+- pylothouse-nicefigs
 
 Requirements
-- Python >= 3.10
+- Python >= 3.8 (tooling configured for Python 3.10)
 
 Install from PyPI
 ```bash
@@ -28,14 +30,15 @@ This installs all subpackages from their local folders via the `local` extra.
 
 Install individual subpackages
 ```bash
+pip install pylothouse-core
 pip install pylothouse-cv
 pip install pylothouse-dash
 pip install pylothouse-math
 pip install pylothouse-utils
 pip install pylothouse-xr
+pip install pylothouse-nicefigs
 ```
 
 Notes
 - The meta-package is thin and only provides dependency aggregation.
 - Subpackages live under `packages/*` and use a `src/` layout under the common `pylothouse` namespace.
-
