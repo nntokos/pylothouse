@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pylothouse-core"
+version = "0.0.1"
+description = "Core utilities for pylothouse: config, errors, logging, plugin registry"
+readme = { file = "README.md", content-type = "text/markdown" }
+authors = [
+    { name = "Nikolaos Ntokos", email = "ndokos@hotmail.com" }
+]
+license = { text = "MIT" }
+requires-python = ">=3.8"
+dependencies = []
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["pylothouse*"]
+

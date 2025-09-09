@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pylothouse"
+version = "0.1.0"
+description = "Meta-package: installs all pylothouse components"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.8"
+dependencies = [
+    "pylothouse-core>=0.0.1,<0.2",
+    "pylothouse-cv>=0.0.1,<0.2",
+    "pylothouse-dash>=0.0.1,<0.2",
+    "pylothouse-math>=0.0.1,<0.2",
+    "pylothouse-utils>=0.0.1,<0.2",
+    "pylothouse-xr>=0.0.1,<0.2",
+    "pylothouse-nicefigs>=0.0.1,<0.2"
+]
+
+[project.optional-dependencies]
+local = [
+    "pylothouse-core @ ../pylothouse-core",
+    "pylothouse-cv @ ../pylothouse-cv",
+    "pylothouse-dash @ ../pylothouse-dash",
+    "pylothouse-math @ ../pylothouse-math",
+    "pylothouse-utils @ ../pylothouse-utils",
+    "pylothouse-xr @ ../pylothouse-xr",
+    "pylothouse-nicefigs @ ../pylothouse-nicefigs"
+]
+
+[project.urls]
+Homepage = "https://github.com/nnmav/nnmavpy" # TODO: change address
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["pylothouse_meta"]

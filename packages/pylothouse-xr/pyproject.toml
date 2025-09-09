@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pylothouse-xr"
+version = "0.0.1"
+description = "XR utilities for pylothouse"
+readme = { file = "README.md", content-type = "text/markdown" }
+authors = [
+    { name = "Nikolaos Ntokos", email = "ndokos@hotmail.com" }
+]
+license = { text = "MIT" }
+requires-python = ">=3.8"
+dependencies = [
+    "pylothouse-core>=0.0.1,<0.2",
+    "evo",
+    "pandas"
+]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["pylothouse*"]

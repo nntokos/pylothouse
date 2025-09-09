@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pylothouse-nicefigs"
+version = "0.0.1"
+description = "Config-first, journal-ready matplotlib figure builder for scientific papers"
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [{name="Your Name", email="you@example.com"}]
+license = {text="MIT"}
+dependencies = [
+  "matplotlib>=3.7",
+  "pandas>=2.0",
+  "numpy>=1.24",
+  "pydantic>=2.6",
+  "ruamel.yaml>=0.18"
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-mpl", "ruff", "pre-commit"]
+
+[project.scripts]
+nicefigs = "pylothouse_nicefigs.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["./"]
+include = ["pylothouse_nicefigs*"]
