@@ -15,7 +15,7 @@ See `examples/` for sample configs.
 
 - Render from a YAML file on disk (data paths in YAML resolve relative to the YAML’s folder):
 ```python
-import nicefigs as nf
+from pylothouse import nicefigs as nf
 
 # Load YAML and render; export.path resolves relative to the YAML by default
 spec = nf.load_config("examples/fig_cdf_hist.yml")
@@ -29,7 +29,7 @@ nf.render_spec(spec, resolve_export_relative_to="cwd")
   - Pass a dict of DataFrames where keys match series.data.
 ```python
 import pandas as pd
-import nicefigs as nf
+from pylothouse import nicefigs as nf
 
 # Minimal config as a Python dict (could also be a YAML file with the same fields)
 cfg = {

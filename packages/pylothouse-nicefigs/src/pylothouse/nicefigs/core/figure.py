@@ -1,13 +1,33 @@
-from typing import List
+from typing import List, Optional
 from matplotlib import pyplot as plt
 from .layout import make_grid
 from .axes import setup_axes, maybe_legend
 from ..io.readers import load_dataframe
 from .registry import make as make_layer
+from copy import deepcopy
+from ..config.models import AxesSpec
 
 def new_figure(spec):
     fig, axes = make_grid(spec.layout)
     return fig, axes
+
+def _deep_merge(a: dict, b: dict) -> dict:
+    out = deepcopy(a)
+    for k, v in b.items():
+        if isinstance(v, dict) and isinstance(out.get(k), dict):
+            out[k] = _deep_merge(out[k], v)
+        else:
+            out[k] = v
+    return out
+
+def _merge_axes_specs(fig_defaults: Optional[AxesSpec], panel_axes: AxesSpec) -> AxesSpec:
+    if fig_defaults is None:
+        return panel_axes
+    base = fig_defaults.model_dump(exclude_unset=True)
+    override = panel_axes.model_dump(exclude_unset=True)
+    merged = _deep_merge(base, override)
+    # Re-validate so validators convert nested dicts → TextSpec, etc.
+    return AxesSpec.model_validate(merged)
 
 def _resolve_df(series_spec, spec, external_data):
     # 1) If external_data provided, try it first
@@ -34,8 +54,9 @@ def draw_panels(axes, spec, external_data=None):
             if idx >= len(spec.panels):
                 continue
             panel = spec.panels[idx]
+            merged_axes = _merge_axes_specs(spec.axes_defaults, panel.axes)
             ax = axes[r][c]
-            setup_axes(ax, panel.axes)
+            setup_axes(ax, merged_axes, spec.font)
             # Draw series
             for s in panel.series:
                 df = _resolve_df(s, spec, external_data)
@@ -43,6 +64,6 @@ def draw_panels(axes, spec, external_data=None):
                     df = df.query(s.query)
                 layer = make_layer(s.type, spec=s)
                 layer.draw(ax, df)
-            maybe_legend(ax, panel.axes.legend)
+            maybe_legend(ax, panel.axes.legend, spec.font)
             idx += 1
     return axes

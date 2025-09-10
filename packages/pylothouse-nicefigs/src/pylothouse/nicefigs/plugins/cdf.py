@@ -11,7 +11,7 @@ class CDFLayer(Layer):
                 linewidth=self.spec.style.width,
                 linestyle=_to_linestyle(self.spec.style.style),
                 marker=self.spec.style.marker,
-                label=self.spec.label,
+                label=self.spec.label_text,
                 color=self.spec.style.color)
         ax.set_ylim(0, 1)
 

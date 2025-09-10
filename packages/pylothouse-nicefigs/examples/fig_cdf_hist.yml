@@ -2,16 +2,38 @@ preset: ieee_single_col
 palette: okabe_ito
 size: {width: 10, height: 4, unit: in}
 layout: {rows: 1, cols: 3, shared_y: false, wspace: 0.16}
+font: { family: serif, size: 9, use_tex: true, weight: bold,
+        latex_preamble: "\\usepackage{amsmath}\\usepackage{siunitx}" }
+
+# Figure-level coarse toggles and styles for ALL panels
+axes_defaults:
+  show_title: true
+  show_xlabel: true
+  show_ylabel: true
+  xticks: { label_size: 7, direction: in, length: 3, width: 0.8 }
+  grid:  { show: true, which: both, linestyle: ":", linewidth: 0.5 }
+  legend: { show: false }   # no legends by default
 
 panels:
-  - axes: {xlabel: "SNR (dB)", ylabel: "CDF", legend: {show: true, loc: "lower right"}}
+  - axes:
+      title: {text: "CDF of SNR", show: false}
+      legend: { show: false }
+      grid: { show: false }
+      ticks: { show: true }
     series:
       - {type: cdf, data: "./data_snr_a.csv", x: "snr", label: "A"}
       - {type: cdf, data: "./data_snr_b.csv", x: "snr", label: "B", style: {style: dashed}}
-  - axes: {xlabel: "Latency (ms)", ylabel: "", legend: {show: false}}
+  - axes:
+      xlabel: "Latency (ms)"
+      ylabel: ""
+      legend: { show: true , title: { show: false } }
+      yticks:
+        range: [0, 2, 0.1]
+      limits:
+        y: [0, 3]
     series:
       - {type: hist, data: "./data_latency.csv", x: "latency", label: "Latency", bins: 20}
-  - axes: {xlabel: "x", ylabel: "y", legend: {show: false}}
+  - axes: {xlabel: "x", ylabel: { show: false }, legend: {show: false}, title: {text: "Latency Title", show: true}}
     series:
       - {type: line, data: "./data_line.csv", x: "x", y: "y", label: "y vs x"}
 export: {path: "./fig_cdf_hist.png", formats: ["png"], dpi: 600}

@@ -1,17 +1,18 @@
 from __future__ import annotations
 from pathlib import Path
+from typing import Optional, Union
 from ruamel.yaml import YAML
 from .models import FigureSpec
 from .presets.journals import apply_journal_preset
 from .presets.themes import apply_theme
 
-def _read_yaml(path: str | Path) -> dict:
+def _read_yaml(path: Union[str, Path]) -> dict:
     yaml = YAML(typ="safe")
     with open(path, "r", encoding="utf-8") as f:
         return yaml.load(f) or {}
 
 def load_config(path_or_dict) -> FigureSpec:
-    base_dir: str | None = None
+    base_dir: Optional[str] = None
     if isinstance(path_or_dict, (str, Path)):
         cfg_path = Path(path_or_dict)
         base_dir = str(cfg_path.resolve().parent)
