@@ -155,7 +155,6 @@ def _apply_text_spec(setter, artist_getter, spec, global_font, *, pad_kw=None, a
                     dy_in = (dy / y_range) * axes_h_in
                 base_trans = artist.get_transform()
                 shift = ScaledTranslation(dx_in, dy_in, fig.dpi_scale_trans)
-                print(shift)
                 artist.set_transform(base_trans + shift)
 
 def _apply_spines(ax: Axes, sp):

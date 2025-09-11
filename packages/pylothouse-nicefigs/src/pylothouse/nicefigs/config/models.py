@@ -360,7 +360,8 @@ class OverlaySpec(BaseModel):
     - point: a point at (x, y); "width" is used as marker size fallback.
     - rect: rectangle defined by (x, y, width, height) or by corners (x0, x1, y0, y1).
     - circle: center (x, y) with data-unit radius.
-    - annotation: free text placed at (x, y) with offsets text_dx/text_dy.
+    - annotation: free text placed at (x, y) with optional offsets (`text_dx`/`text_dy`),
+      rotation in degrees (`text_rotation`), and text alignment (`text_ha`/`text_va`).
     - band: vertical band between x0 and x1 with vertical extent in axis fractions
       [ymin_frac, ymax_frac].
 
@@ -396,7 +397,10 @@ class OverlaySpec(BaseModel):
     text: Optional[str] = None
     text_dx: float = 0.0
     text_dy: float = 0.0
-    text_align: Optional[str] = None
+    # New: explicit horizontal/vertical alignment for overlay text
+    text_ha: Optional[str] = None  # e.g., 'left' | 'center' | 'right'
+    text_va: Optional[str] = None  # e.g., 'top' | 'center' | 'bottom' | 'baseline'
+    text_rotation: Optional[float] = None  # degrees
     ymin_frac: Optional[float] = None
     ymax_frac: Optional[float] = None
 

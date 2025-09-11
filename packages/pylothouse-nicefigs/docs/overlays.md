@@ -10,8 +10,19 @@ Overlays are declarative annotations drawn on top of each panel. They’re speci
 - `point`: marker at (`x`, `y`); size uses `width` if provided (default `30.0`)
 - `rect`: rectangle from (`x`, `y`, `width`, `height`) or corners (`x0`, `y0`, `x1`, `y1`)
 - `circle`: circle centered at (`x`, `y`) with `radius`
-- `annotation`: free text at (`x`, `y`) with `text_dx`/`text_dy` and `text_align`
-- `band`: vertical band between `x0` and `x1` with vertical extent `[ymin_frac, ymax_frac]` in `Axes` fraction coords
+- `annotation`: 
+    - Free text placed at (`x`, `y`)
+    - Supports `text_dx`/`text_dy` for offsetting text position
+    - `text_rotation` specifies rotation in degrees
+    - Alignment controls:
+      - `text_ha`: horizontal alignment (`"left"` | `"center"` | `"right"`), default `"center"`
+      - `text_va`: vertical alignment (`"top"` | `"center"` | `"bottom"` | `"baseline"`), default `"center"`
+    - Anchor semantics: the point (`x`, `y`) refers to the specified text anchor given by `text_ha`/`text_va`
+- `band`: 
+    - Vertical band between `x0` and `x1`
+    - Vertical extent defined by `[ymin_frac, ymax_frac]` in Axes fraction coordinates
+    - Highlights regions of interest or ranges on the x-axis
+    - Underlying implementation uses `axvspan`
 
 ## Style fields
 
@@ -32,6 +43,6 @@ Overlays are declarative annotations drawn on top of each panel. They’re speci
 
 ## Notes
 
-- For `rect`/`circle` with text, the label is drawn centered with optional offsets
+- For `rect`/`circle` with text, the label is drawn centered with optional offsets; you can also set `text_ha`/`text_va` to change the anchoring
 - `band` uses `axvspan` under the hood; `ymin_frac`/`ymax_frac` are clamped to `[0, 1]`
 - JSON tip: in `.json` files, use `true`/`false` (booleans) for `show_in_legend`, not strings like `"False"`.

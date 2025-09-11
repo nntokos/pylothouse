@@ -2,7 +2,7 @@
     {
         "type": "vline",
         "x": 15.89,
-        "label": "Mount",
+        "label": "Vertical Line",
         "show_in_legend": false,
         "linestyle": "dash",
         "color": "blue"
@@ -10,7 +10,7 @@
     {
         "type": "vline",
         "x": 89.15,
-        "label": "Device Sleep",
+        "label": "Vertical Line",
         "show_in_legend": false,
         "linestyle": "dash",
         "color": "black"
@@ -21,7 +21,7 @@
         "x1": 66.928,
         "y0": 0.0,
         "y1": 1.0,
-        "label": "RGB during passthrough",
+        "label": "Rectangular Highlight",
         "show_in_legend": false,
         "facecolor": "red",
         "alpha": 0.2
@@ -29,7 +29,7 @@
     {
         "type": "vline",
         "x": 70.698,
-        "label": "Device Unmount (log)",
+        "label": "Vertical Line",
         "show_in_legend": false,
         "linestyle": "solid",
         "linewidth": 1,
@@ -38,20 +38,32 @@
     {
         "type": "vline",
         "x": 86.054,
-        "label": "Device Sleep (log)",
+        "label": "Thick Vertical Line",
         "show_in_legend": false,
         "linestyle": "solid",
-        "linewidth": 10,
+        "linewidth": 5,
         "color": "black"
     },
     {
         "type": "annotation",
-        "x": 86.054,
+        "x": 50,
         "y": 0.5,
-        "text": "Sleep",
+        "text": "Annotation",
         "show_in_legend": false,
         "text_dx": 0,
         "text_dy": 0,
         "text_align": "center"
+    },
+    {
+      "type": "annotation",
+      "x": 50,
+      "y": 3.5,
+      "text_rotation": 90,
+      "text": "Annotation (90 deg)",
+      "show_in_legend": false,
+      "text_dx": 0,
+      "text_dy": 0,
+      "text_ha": "left",
+      "text_va": "bottom"
     }
 ]

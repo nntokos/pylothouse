@@ -12,7 +12,7 @@ Supported overlay types (``OverlaySpec.type``):
 - "rect": rectangle specified either by ``(x, y, width, height)`` or by corners
   ``(x0, y0)``–``(x1, y1)`` in data coordinates.
 - "circle": circle centered at ``(x, y)`` with ``radius`` in data coordinates.
-- "annotation": text placed at ``(x, y)``; returns no artist (draws a Text object).
+- "annotation": text placed at ``(x, y)``; supports ``text_rotation`` (degrees); returns no artist (draws a Text object).
 - "band": vertical band spanning ``[x0, x1]`` in data coordinates and
   ``[ymin_frac, ymax_frac]`` in Axes fraction coordinates (0..1, clamped).
 
@@ -84,7 +84,7 @@ def _apply_fill_style(patch, ov: OverlaySpec):
         - point: requires ``x, y``; size uses ``width`` if provided (default 30.0).
         - rect: use either ``x, y, width, height`` or ``x0, y0, x1, y1``.
         - circle: requires ``x, y, radius``.
-        - annotation: requires ``x, y, text``; offset by ``text_dx, text_dy``; alignment via ``text_align``.
+        - annotation: requires ``x, y, text``; offset by ``text_dx, text_dy``; alignment via ``text_ha``/``text_va``.
         - band: requires ``x0, x1``; vertical extent defined in Axes fraction via
           ``ymin_frac``/``ymax_frac`` (each clamped to [0, 1]).
 
@@ -142,7 +142,9 @@ def draw_overlay(ax: Axes, ov: OverlaySpec, *, global_font=None):  # global_font
             if ov.text:
                 tx = x0 + w/2.0 + ov.text_dx
                 ty = y0 + h/2.0 + ov.text_dy
-                ax.text(tx, ty, ov.text, ha=ov.text_align or 'center', va='center',
+                ha_val = (ov.text_ha or 'center')
+                va_val = (ov.text_va or 'center')
+                ax.text(tx, ty, ov.text, ha=ha_val, va=va_val,
                         zorder=(ov.zorder + 1 if ov.zorder is not None else None))
         elif t == 'circle':
             if None in (ov.x, ov.y, ov.radius): return None
@@ -150,13 +152,18 @@ def draw_overlay(ax: Axes, ov: OverlaySpec, *, global_font=None):  # global_font
             _apply_fill_style(art, ov)
             ax.add_patch(art)
             if ov.text:
+                ha_val = (ov.text_ha or 'center')
+                va_val = (ov.text_va or 'center')
                 ax.text(ov.x + ov.text_dx, ov.y + ov.text_dy, ov.text,
-                        ha=ov.text_align or 'center', va='center',
+                        ha=ha_val, va=va_val,
                         zorder=(ov.zorder + 1 if ov.zorder is not None else None))
         elif t == 'annotation':
             if None in (ov.x, ov.y, ov.text): return None
+            ha_val = (ov.text_ha or 'center')
+            va_val = (ov.text_va or 'center')
             ax.text(ov.x + (ov.text_dx or 0.0), ov.y + (ov.text_dy or 0.0), ov.text,
-                    ha=ov.text_align or 'center', va='center', zorder=ov.zorder)
+                    ha=ha_val, va=va_val, zorder=ov.zorder,
+                    rotation=ov.text_rotation if getattr(ov, 'text_rotation', None) is not None else 0)
         elif t == 'band':
             if None in (ov.x0, ov.x1): return None
             y0f = 0.0 if ov.ymin_frac is None else max(0.0, min(1.0, ov.ymin_frac))
@@ -184,30 +191,24 @@ def draw_overlay(ax: Axes, ov: OverlaySpec, *, global_font=None):  # global_font
         # Fail soft on malformed overlay entry
         return None
 
+
+def draw_overlays(ax: Axes, overlays: Optional[List[OverlaySpec]], global_font=None):
     """Draw multiple overlay elements on an Axes.
 
-    Iterates the provided list in order and calls ``draw_overlay`` for each
-    ``OverlaySpec``. Any overlay that fails to draw returns ``None`` and is
-    skipped; others contribute their created Artist to the return list.
+    Iterates the provided list in order and calls draw_overlay for each OverlaySpec.
+    Any overlay that fails to draw returns None and is skipped; others contribute
+    their created Artist to the return list.
 
     Args:
-        ax: Target Matplotlib ``Axes`` to draw on.
-        overlays: Sequence of overlay specifications. ``None`` or empty lists
-            are accepted and result in an empty return list.
+        ax: Target Matplotlib Axes to draw on.
+        overlays: Sequence of overlay specifications; None or empty -> [].
         global_font: Reserved for future LaTeX/text styling hooks; currently unused.
 
     Returns:
-        List of created Matplotlib Artists (one per overlay that produced an
-        artist). Note that overlays of type "annotation" do not return an Artist
-        and thus are not included.
-
-    Notes:
-        - Overlays are drawn in the order given and honor each spec's ``zorder``.
-        - This function never raises for individual spec errors; it aims to be
-          robust during batch rendering.
+        list: Created Matplotlib Artists (one per overlay that produced an artist).
+              Note that overlays of type "annotation" do not return an Artist
+              and thus are not included.
     """
-
-def draw_overlays(ax: Axes, overlays: Optional[List[OverlaySpec]], global_font=None):
     if not overlays:
         return []
     arts = []
