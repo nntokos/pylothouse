@@ -135,7 +135,7 @@ def _apply_text_spec(setter, artist_getter, spec, global_font, *, pad_kw=None, a
                     y_min, y_max = 0.0, 1.0
                 x_range = (x_max - x_min) or 1.0
                 y_range = (y_max - y_min) or 1.0
-                print(f"Axes pos: {pos}, fig size: {fig_w_in}x{fig_h_in} in, axes size: {axes_w_in}x{axes_h_in} in, x_range: {x_range}, y_range: {y_range}")
+                # print(f"Axes pos: {pos}, fig size: {fig_w_in}x{fig_h_in} in, axes size: {axes_w_in}x{axes_h_in} in, x_range: {x_range}, y_range: {y_range}")
                 # Conversion helpers
                 def to_inches_val(val: float) -> float:
                     if size_unit == 'mm':

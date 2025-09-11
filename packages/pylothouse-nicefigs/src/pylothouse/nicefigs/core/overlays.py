@@ -1,6 +1,31 @@
-import matplotlib.pyplot as plt
+"""Utilities for drawing declarative overlays on Matplotlib axes.
+
+This module renders overlay items described by ``OverlaySpec`` into
+Matplotlib Artists. It is used by higher-level figure builders to place
+consistent annotations and shapes over plots.
+
+Supported overlay types (``OverlaySpec.type``):
+- "vline": vertical line at ``x`` in data coordinates.
+- "hline": horizontal line at ``y`` in data coordinates.
+- "line": line segment between ``(x0, y0)`` and ``(x1, y1)`` in data coordinates.
+- "point": scatter marker at ``(x, y)`` (size taken from ``width`` if provided).
+- "rect": rectangle specified either by ``(x, y, width, height)`` or by corners
+  ``(x0, y0)``–``(x1, y1)`` in data coordinates.
+- "circle": circle centered at ``(x, y)`` with ``radius`` in data coordinates.
+- "annotation": text placed at ``(x, y)``; returns no artist (draws a Text object).
+- "band": vertical band spanning ``[x0, x1]`` in data coordinates and
+  ``[ymin_frac, ymax_frac]`` in Axes fraction coordinates (0..1, clamped).
+
+Styling fields (when present) are applied consistently:
+- color/facecolor/edgecolor, linewidth, linestyle, alpha, and zorder.
+- For filled patches, explicit ``facecolor`` takes precedence over ``color``.
+- Legend participation is controlled via ``show_in_legend`` and ``label``.
+
+Error handling: functions fail soft. A malformed spec yields ``None`` (or a
+skipped entry), and drawing proceeds for the remaining overlays.
+"""
+
 from matplotlib.patches import Rectangle, Circle as MPCircle
-from matplotlib.transforms import ScaledTranslation
 from typing import List, Optional
 from matplotlib.axes import Axes
 from ..config.models import OverlaySpec
@@ -28,6 +53,57 @@ def _apply_fill_style(patch, ov: OverlaySpec):
     if ov.linestyle is not None and hasattr(patch, 'set_linestyle'): patch.set_linestyle(resolve_linestyle(ov.linestyle))
 
 
+    """Draw a single overlay element on an Axes.
+
+    This function inspects ``ov.type`` and renders the corresponding Artist on
+    ``ax``. It applies styling (color, linewidth, linestyle, alpha, zorder) and
+    optionally registers the Artist for legend display when ``ov.show_in_legend``
+    is true.
+
+    Args:
+        ax: Target Matplotlib ``Axes`` to draw on.
+        ov: Overlay specification describing what to draw and how to style it.
+        global_font: Reserved for future LaTeX/text styling hooks; currently unused.
+
+    Returns:
+        The created Matplotlib Artist for drawable types, or ``None`` if nothing
+        was drawn due to missing fields or when the type does not return an
+        artist (e.g., "annotation"). Typical return types by overlay:
+        - "vline"/"hline": ``matplotlib.lines.Line2D``.
+        - "line": ``matplotlib.lines.Line2D`` (from ``Axes.plot``).
+        - "point": ``matplotlib.collections.PathCollection`` (from ``Axes.scatter``).
+        - "rect": ``matplotlib.patches.Rectangle``.
+        - "circle": ``matplotlib.patches.Circle``.
+        - "band": ``matplotlib.collections.PolyCollection`` (from ``Axes.axvspan``).
+        - "annotation": returns ``None`` (a ``Text`` is still added to the Axes).
+
+    Overlay-specific semantics and required fields (data coordinates unless noted):
+        - vline: requires ``x``.
+        - hline: requires ``y``.
+        - line: requires ``x0, y0, x1, y1``.
+        - point: requires ``x, y``; size uses ``width`` if provided (default 30.0).
+        - rect: use either ``x, y, width, height`` or ``x0, y0, x1, y1``.
+        - circle: requires ``x, y, radius``.
+        - annotation: requires ``x, y, text``; offset by ``text_dx, text_dy``; alignment via ``text_align``.
+        - band: requires ``x0, x1``; vertical extent defined in Axes fraction via
+          ``ymin_frac``/``ymax_frac`` (each clamped to [0, 1]).
+
+    Notes:
+        - Patches (rectangles, circles, band) are added to ``ax`` via ``add_patch``
+          or the corresponding helper and honor ``facecolor``/``edgecolor``.
+        - When both ``color`` and ``facecolor``/``edgecolor`` are present, explicit
+          ``facecolor``/``edgecolor`` take precedence.
+        - If ``ov.text`` is provided for a rectangle or circle, a centered text
+          label is drawn with optional offsets ``text_dx``/``text_dy``.
+        - Legend: if ``ov.show_in_legend`` is true, the artist's label is set to
+          ``ov.label`` (or "" when None); otherwise any label is cleared.
+        - Fail-soft: any exception while drawing this overlay is suppressed and
+          results in ``None``.
+
+    Examples:
+        >>> art = draw_overlay(ax, OverlaySpec(type='vline', x=0.5, color='k', linestyle='--'))
+        >>> art = draw_overlay(ax, OverlaySpec(type='rect', x=0, y=0, width=1, height=2, facecolor='#eee'))
+    """
 def draw_overlay(ax: Axes, ov: OverlaySpec, *, global_font=None):  # global_font kept for future LaTeX styling
     """Draw a single overlay element as specified by OverlaySpec. Returns the created artist or None."""
     t = ov.type
@@ -108,6 +184,28 @@ def draw_overlay(ax: Axes, ov: OverlaySpec, *, global_font=None):  # global_font
         # Fail soft on malformed overlay entry
         return None
 
+    """Draw multiple overlay elements on an Axes.
+
+    Iterates the provided list in order and calls ``draw_overlay`` for each
+    ``OverlaySpec``. Any overlay that fails to draw returns ``None`` and is
+    skipped; others contribute their created Artist to the return list.
+
+    Args:
+        ax: Target Matplotlib ``Axes`` to draw on.
+        overlays: Sequence of overlay specifications. ``None`` or empty lists
+            are accepted and result in an empty return list.
+        global_font: Reserved for future LaTeX/text styling hooks; currently unused.
+
+    Returns:
+        List of created Matplotlib Artists (one per overlay that produced an
+        artist). Note that overlays of type "annotation" do not return an Artist
+        and thus are not included.
+
+    Notes:
+        - Overlays are drawn in the order given and honor each spec's ``zorder``.
+        - This function never raises for individual spec errors; it aims to be
+          robust during batch rendering.
+    """
 
 def draw_overlays(ax: Axes, overlays: Optional[List[OverlaySpec]], global_font=None):
     if not overlays:

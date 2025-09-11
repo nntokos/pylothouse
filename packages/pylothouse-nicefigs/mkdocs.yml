@@ -1,0 +1,30 @@
+site_name: nicefigs
+site_description: Config-first, journal-ready Matplotlib figures from YAML
+site_url: ""
+repo_url: ""
+nav:
+  - Home: index.md
+  - Getting started: quickstart.md
+  - Configuration schema: configuration.md
+  - Data sources: data-sources.md
+  - Layers: layers.md
+  - Axes and styling: axes.md
+  - Overlays: overlays.md
+  - Layout: layout.md
+  - Export: export.md
+  - Presets and themes: presets-themes.md
+  - CLI: cli.md
+  - Python API: api.md
+  - Validation: validation.md
+  - Extending nicefigs: extending.md
+  - Examples: examples.md
+  - Troubleshooting: troubleshooting.md
+theme:
+  name: material
+markdown_extensions:
+  - admonition
+  - toc:
+      permalink: true
+plugins: []
+extra_css:
+  - assets/extra.css
