@@ -1,9 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Optional
 from .registry import register
-
-def _to_linestyle(style: str):
-    return {"solid": "-", "dashed": "--", "dotted": ":", "dashdot": "-."}.get(style, "-")
+from .utils import resolve_linestyle
 
 class Layer(ABC):
     def __init__(self, spec):
@@ -17,7 +14,7 @@ class Layer(ABC):
 class LineLayer(Layer):
     def draw(self, ax, df):
         ax.plot(df[self.spec.x], df[self.spec.y],
-                linestyle=_to_linestyle(self.spec.style.style),
+                linestyle=resolve_linestyle(self.spec.style.style),
                 linewidth=self.spec.style.width,
                 marker=self.spec.style.marker,
                 color=self.spec.style.color,

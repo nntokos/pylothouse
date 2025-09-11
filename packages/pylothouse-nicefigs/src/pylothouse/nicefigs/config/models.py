@@ -1,7 +1,5 @@
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 from typing import List, Optional, Dict, Literal, Union
-from pydantic import field_validator
-from pydantic import model_validator
 
 Unit = float
 
@@ -20,6 +18,10 @@ class TextSpec(TextStyleSpec):
     ha: Optional[str] = None
     va: Optional[str] = None
     pad: Optional[float] = None
+    dx: Optional[float] = None   # horizontal offset
+    dy: Optional[float] = None   # vertical offset
+    dx_unit: Literal["axes","points"] = "axes"
+    dy_unit: Literal["axes","points"] = "axes"
 
 TextLike = Union[str, TextSpec, None]
 
@@ -54,7 +56,7 @@ class TickFormatterSpec(BaseModel):
 
 class AxisTicksSpec(TextStyleSpec):
     show: bool = True                  # show/hide tick labels
-    rotation: Optional[float] = None   # unified rotation (replaces legacy label_rotation)
+    rotation: Optional[float] = None   # unified rotation
     direction: Optional[str] = None    # "in", "out", "inout"
     length: Optional[float] = None
     width: Optional[float] = None
@@ -97,8 +99,8 @@ class AxesSpec(BaseModel):
     xticks: AxisTicksSpec = Field(default_factory=lambda: AxisTicksSpec())
     yticks: AxisTicksSpec = Field(default_factory=lambda: AxisTicksSpec())
 
-    # global visibility switches for “everything removable”
-    show_axes_frame: bool = True   # outline/spines toggles tie into SpinesSpec
+    # global visibility switches
+    show_axes_frame: bool = True
     show_xlabel: bool = True
     show_ylabel: bool = True
     show_title: bool = True
@@ -120,6 +122,10 @@ class LegendSpec(BaseModel):
     title: TextLike = None
     labels: Optional[List[TextLike]] = None
     style: Optional[TextStyleSpec] = None   # global legend text style fallback
+    anchor: Optional[List[float]] = None    # base bbox_to_anchor [x,y] or [x,y,w,h]
+    offset_x: Optional[float] = None        # shift applied to anchor/transform x
+    offset_y: Optional[float] = None        # shift applied to anchor/transform y
+    offset_unit: Literal["axes","points"] = "axes"
 
     @field_validator("title", mode="before")
     @classmethod
@@ -152,8 +158,8 @@ class LegendSpec(BaseModel):
 
 class GridSpec(BaseModel):
     show: bool = True
-    which: str = "both"          # "major","minor","both"
-    linestyle: str = ":"         # ":", "--", "-", ...
+    which: Literal["major","minor","both"] = "both"
+    linestyle: str = ":"
     linewidth: float = 0.5
     color: str = "#cccccc"
 
@@ -197,15 +203,71 @@ class SeriesSpec(BaseModel):
             return self.label.text
         return str(self.label)
 
+# Overlay specification (simple, generic)
+class OverlaySpec(BaseModel):
+    type: Literal["line","hline","vline","point","rect","circle","annotation","band"]
+    color: Optional[str] = None
+    edgecolor: Optional[str] = None
+    facecolor: Optional[str] = None
+    fill: Optional[bool] = None
+    alpha: Optional[float] = None
+    linewidth: Optional[float] = None
+    linestyle: Optional[str] = None
+    label: Optional[str] = None
+    show_in_legend: bool = False  # new flag to force legend inclusion
+    zorder: Optional[int] = None
+    # geometry
+    x: Optional[float] = None
+    y: Optional[float] = None
+    x0: Optional[float] = None
+    x1: Optional[float] = None
+    y0: Optional[float] = None
+    y1: Optional[float] = None
+    radius: Optional[float] = None
+    width: Optional[float] = None
+    height: Optional[float] = None
+    # text / annotation
+    text: Optional[str] = None
+    text_dx: float = 0.0
+    text_dy: float = 0.0
+    text_align: Optional[str] = None
+    ymin_frac: Optional[float] = None
+    ymax_frac: Optional[float] = None
+
+OverlayLike = Union[OverlaySpec, str]
+
 class PanelSpec(BaseModel):
     axes: AxesSpec = AxesSpec()
     series: List[SeriesSpec] = Field(default_factory=list)
+    overlays: Optional[List[OverlayLike]] = None  # file path strings expanded in loader BEFORE validation
+
+    @field_validator("overlays", mode="before")
+    @classmethod
+    def _coerce_overlays(cls, v):
+        if v is None:
+            return None
+        if not isinstance(v, list):
+            raise TypeError("panel.overlays must be a list")
+        out = []
+        for item in v:
+            if item is None:
+                continue
+            if isinstance(item, OverlaySpec):
+                out.append(item)
+            elif isinstance(item, str):  # file path kept for loader phase already expanded; treat as error if still present
+                # If a file path string reached here, expansion was skipped; raise to surface configuration issue.
+                raise ValueError("Overlay file paths must be expanded before validation (loader should replace them with dict entries).")
+            elif isinstance(item, dict):
+                out.append(OverlaySpec.model_validate(item))
+            else:
+                raise TypeError("overlay list entries must be dict or OverlaySpec after loader expansion")
+        return out
 
 class LayoutSpec(BaseModel):
     rows: int = 1
     cols: int = 1
-    wspace: float = 0.1
-    hspace: float = 0.1
+    wspace: Optional[float] = None   # None => auto spacing
+    hspace: Optional[float] = None   # None => auto spacing
     shared_x: bool = False
     shared_y: bool = False
 

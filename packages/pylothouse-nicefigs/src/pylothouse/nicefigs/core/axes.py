@@ -4,6 +4,9 @@ import matplotlib.ticker as mticker
 from ..config.models import AxesSpec, AxisTicksSpec, TextSpec, TextStyleSpec
 import numpy as np
 import re
+from matplotlib import transforms as mtransforms
+from matplotlib.transforms import ScaledTranslation
+from .utils import *
 
 def _as_str_or_empty(x):
     # Treat None (and False, if you like) as an empty label, not "None"
@@ -72,7 +75,7 @@ def _latexify_text(s, local_spec, global_font):
             wrapped = f"\\textit{{{wrapped}}}"
     return wrapped
 
-def _apply_text_spec(setter, artist_getter, spec, global_font, *, pad_kw=None, align_key=None):
+def _apply_text_spec(setter, artist_getter, spec, global_font, *, pad_kw=None, align_key=None, ax_ref: Axes=None, size_unit: str = "in"):
     if not spec or not getattr(spec, "show", True):
         # hide if possible
         artist = artist_getter()
@@ -106,6 +109,54 @@ def _apply_text_spec(setter, artist_getter, spec, global_font, *, pad_kw=None, a
         artist.set_rotation(spec.rotation)
     if artist is not None:
         artist.set_visible(True)
+        # positional offsets with unit handling
+        if hasattr(spec, 'dx') or hasattr(spec, 'dy'):
+            dx = getattr(spec, 'dx', None) or 0.0
+            dy = getattr(spec, 'dy', None) or 0.0
+            if (dx != 0.0 or dy != 0.0):
+                dx_unit = getattr(spec, 'dx_unit', 'axes')
+                dy_unit = getattr(spec, 'dy_unit', 'axes')
+                fig = artist.figure
+                ax_obj = ax_ref or getattr(artist, 'axes', None)
+                if ax_obj is None:
+                    return
+                # Determine axes width/height in inches
+                pos = ax_obj.get_position()
+                fig_w_in = fig.get_figwidth()
+                fig_h_in = fig.get_figheight()
+                axes_w_in = pos.width * fig_w_in
+                axes_h_in = pos.height * fig_h_in
+                # Axis data ranges
+                try:
+                    x_min, x_max = ax_obj.get_xlim()
+                    y_min, y_max = ax_obj.get_ylim()
+                except Exception:
+                    x_min, x_max = 0.0, 1.0
+                    y_min, y_max = 0.0, 1.0
+                x_range = (x_max - x_min) or 1.0
+                y_range = (y_max - y_min) or 1.0
+                print(f"Axes pos: {pos}, fig size: {fig_w_in}x{fig_h_in} in, axes size: {axes_w_in}x{axes_h_in} in, x_range: {x_range}, y_range: {y_range}")
+                # Conversion helpers
+                def to_inches_val(val: float) -> float:
+                    if size_unit == 'mm':
+                        return utils.mm_to_in(val)
+                    if size_unit == 'pt':
+                        return utils.pt_to_in(val)
+                    # default 'in'
+                    return val
+                # Compute dx,dy in inches according to new semantics
+                if dx_unit == 'points':  # absolute in figure size unit (mm/in/pt)
+                    dx_in = to_inches_val(dx)
+                else:  # 'axes' meaning data-unit shift
+                    dx_in = (dx / x_range) * axes_w_in
+                if dy_unit == 'points':
+                    dy_in = to_inches_val(dy)
+                else:
+                    dy_in = (dy / y_range) * axes_h_in
+                base_trans = artist.get_transform()
+                shift = ScaledTranslation(dx_in, dy_in, fig.dpi_scale_trans)
+                print(shift)
+                artist.set_transform(base_trans + shift)
 
 def _apply_spines(ax: Axes, sp):
     spines = ax.spines
@@ -242,26 +293,10 @@ def _apply_axis_ticks(ax: Axes, axis_name: Literal["x","y"], ticks_spec: AxisTic
                 if getattr(global_font, "use_tex", False):
                     tt.set_text(_latexify_text(tt.get_text(), lbl_spec, global_font))
 
-def setup_axes(ax: Axes, axes_spec: AxesSpec, global_font):
+def setup_axes(ax: Axes, axes_spec: AxesSpec, global_font, *, size_unit: str = "in"):
     # scales
     ax.set_xscale(axes_spec.xscale)
     ax.set_yscale(axes_spec.yscale)
-
-    # title
-    _apply_text_spec(ax.set_title, lambda: ax.title, axes_spec.title, global_font, pad_kw="pad", align_key="loc")
-
-    # x/y labels
-    _apply_text_spec(ax.set_xlabel, lambda: ax.xaxis.label, axes_spec.xlabel, global_font, pad_kw="labelpad")
-    _apply_text_spec(ax.set_ylabel, lambda: ax.yaxis.label, axes_spec.ylabel, global_font, pad_kw="labelpad")
-
-    # grid
-    if axes_spec.grid.show:
-        ax.grid(True, which=axes_spec.grid.which,
-                linestyle=axes_spec.grid.linestyle,
-                linewidth=axes_spec.grid.linewidth,
-                color=axes_spec.grid.color)
-    else:
-        ax.grid(False)
 
     # limits
     lims = axes_spec.limits
@@ -272,11 +307,26 @@ def setup_axes(ax: Axes, axes_spec: AxesSpec, global_font):
     _apply_axis_ticks(ax, "x", axes_spec.xticks, global_font)
     _apply_axis_ticks(ax, "y", axes_spec.yticks, global_font)
     _apply_spines(ax, axes_spec.spines)
-
     # optional: hide whole axes frame (keeps data/labels if you want)
     if not axes_spec.show_axes_frame:
         for key in ["left","right","top","bottom"]:
             ax.spines[key].set_visible(False)
+
+    # grid
+    if axes_spec.grid.show:
+        ax.grid(True, which=axes_spec.grid.which,
+                linestyle=axes_spec.grid.linestyle,
+                linewidth=axes_spec.grid.linewidth,
+                color=axes_spec.grid.color)
+    else:
+        ax.grid(False)
+
+    # title
+    _apply_text_spec(ax.set_title, lambda: ax.title, axes_spec.title, global_font, pad_kw="pad", align_key="loc", ax_ref=ax, size_unit=size_unit)
+
+    # x/y labels
+    _apply_text_spec(ax.set_xlabel, lambda: ax.xaxis.label, axes_spec.xlabel, global_font, pad_kw="labelpad", ax_ref=ax, size_unit=size_unit)
+    _apply_text_spec(ax.set_ylabel, lambda: ax.yaxis.label, axes_spec.ylabel, global_font, pad_kw="labelpad", ax_ref=ax, size_unit=size_unit)
 
     return ax
 
@@ -321,8 +371,44 @@ def maybe_legend(ax: Axes, legend_spec, global_font):
     if getattr(global_font, "use_tex", False):
         title_text = _latexify_text(title_text, title_spec or legend_spec.style or TextStyleSpec(), global_font)
 
+    # Compute anchor with offsets (axes or points)
+    bbox_anchor = None
+    legend_transform = None
+    if legend_spec.anchor is not None:
+        base = list(legend_spec.anchor)
+    else:
+        base = None
+
+    ox = legend_spec.offset_x or 0.0
+    oy = legend_spec.offset_y or 0.0
+    if legend_spec.offset_unit == 'axes':
+        # axes-unit offsets incorporated into anchor numbers
+        if (ox != 0.0 or oy != 0.0):
+            if base is None:
+                base = [0.0, 0.0]
+            if len(base) < 2:
+                base += [0.0]*(2-len(base))
+            base[0] += ox
+            base[1] += oy
+        if base is not None:
+            bbox_anchor = tuple(base)
+            legend_transform = ax.transAxes
+    else:  # points
+        if base is None:
+            # use (0,0) then shift by points transform
+            bbox_anchor = (0.0, 0.0)
+            legend_transform = ax.transAxes
+        else:
+            bbox_anchor = tuple(base)
+            legend_transform = ax.transAxes
+        if (ox != 0.0 or oy != 0.0):
+            fig = ax.figure
+            shift = mtransforms.ScaledTranslation(ox/72.0, oy/72.0, fig.dpi_scale_trans)
+            legend_transform = legend_transform + shift
+
     leg = ax.legend(handles, labels, loc=legend_spec.loc, ncol=legend_spec.ncol,
-                    frameon=legend_spec.frameon, title=title_text)
+                    frameon=legend_spec.frameon, title=title_text,
+                    bbox_to_anchor=bbox_anchor, bbox_transform=legend_transform)
     if leg is None:
         return
 

@@ -1,0 +1,58 @@
+[
+    {
+        "type": "vline",
+        "x": 15.89,
+        "label": "Mount",
+        "show_in_legend": "False",
+        "show_in_legend": "False",
+        "linestyle": "dash",
+        "color": "blue"
+    },
+    {
+        "type": "vline",
+        "x": 89.15,
+        "label": "Device Sleep",
+        "show_in_legend": "False",
+        "linestyle": "dash",
+        "color": "black"
+    },
+    {
+        "type": "rect",
+        "x0": 3.43,
+        "x1": 66.928,
+        "y0": 0.0,
+        "y1": 1.0,
+        "label": "RGB during passthrough",
+        "show_in_legend": "False",
+        "facecolor": "red",
+        "alpha": 0.2
+    },
+    {
+        "type": "vline",
+        "x": 70.698,
+        "label": "Device Unmount (log)",
+        "show_in_legend": "False",
+        "linestyle": "solid",
+        "linewidth": 1,
+        "color": "blue"
+    },
+    {
+        "type": "vline",
+        "x": 86.054,
+        "label": "Device Sleep (log)",
+        "show_in_legend": "False",
+        "linestyle": "solid",
+        "linewidth": 10,
+        "color": "black"
+    },
+    {
+        "type": "annotation",
+        "x": 86.054,
+        "y": 0.5,
+        "text": "Sleep",
+        "show_in_legend": "False",
+        "text_dx": 0,
+        "text_dy": 0,
+        "text_align": "center"
+    }
+]

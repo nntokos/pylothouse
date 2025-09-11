@@ -1,5 +1,6 @@
 import numpy as np
-from ..core.layers import Layer, _to_linestyle
+from ..core.layers import Layer
+from ..core.utils import resolve_linestyle
 from ..core.registry import register
 
 @register("cdf")
@@ -9,7 +10,7 @@ class CDFLayer(Layer):
         y = np.arange(1, len(x)+1) / len(x)
         ax.plot(x, y,
                 linewidth=self.spec.style.width,
-                linestyle=_to_linestyle(self.spec.style.style),
+                linestyle=resolve_linestyle(self.spec.style.style),
                 marker=self.spec.style.marker,
                 label=self.spec.label_text,
                 color=self.spec.style.color)

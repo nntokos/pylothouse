@@ -1,6 +1,6 @@
 from contextlib import contextmanager
 from matplotlib import rcParams
-from .util import mm_to_in
+from .utils import mm_to_in
 
 def _apply_font(font):
     # Base typography

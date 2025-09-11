@@ -1,39 +1,77 @@
 preset: ieee_single_col
 palette: okabe_ito
 size: {width: 10, height: 4, unit: in}
-layout: {rows: 1, cols: 3, shared_y: false, wspace: 0.16}
+layout: {rows: 2, cols: 3, shared_y: false }
 font: { family: serif, size: 9, use_tex: true, weight: bold,
         latex_preamble: "\\usepackage{amsmath}\\usepackage{siunitx}" }
 
-# Figure-level coarse toggles and styles for ALL panels
+# Figure-level defaults applied then overridden per panel
 axes_defaults:
   show_title: true
   show_xlabel: true
   show_ylabel: true
-  xticks: { label_size: 7, direction: in, length: 3, width: 0.8 }
+  # Tick style defaults (size instead of old label_size)
+  xticks: { size: 7, direction: in, length: 3, width: 0.8 }
+  yticks: { size: 7 }
   grid:  { show: true, which: both, linestyle: ":", linewidth: 0.5 }
-  legend: { show: false }   # no legends by default
+  legend: { show: false, style: { size: 8, color: "#333333" } }
 
 panels:
+  # Panel 1: Two CDFs, title hidden to show per-panel override works
   - axes:
-      title: {text: "CDF of SNR", show: false}
+      title: { text: "CDF of SNR", show: false }
       legend: { show: false }
       grid: { show: false }
-      ticks: { show: true }
     series:
-      - {type: cdf, data: "./data_snr_a.csv", x: "snr", label: "A"}
-      - {type: cdf, data: "./data_snr_b.csv", x: "snr", label: "B", style: {style: dashed}}
+      - { type: cdf, data: "./data_snr_a.csv", x: "snr", label: { text: "Dataset A" } }
+      - { type: cdf, data: "./data_snr_b.csv", x: "snr", label: { text: "Dataset B", style: italic }, style: { style: dashed } }
+
+  # Panel 2: Histogram with legend displayed, custom legend title hidden, xlabel plain, ylabel empty string
   - axes:
-      xlabel: "Latency (ms)"
-      ylabel: ""
-      legend: { show: true , title: { show: false } }
+      xlabel: { text: "Latency (ms)" }
+      ylabel: ""          # tests empty text passes through
+      legend: { show: true, title: { show: false }, labels: [ {text: "Latency Dist"} ] }
       yticks:
-        range: [0, 2, 0.1]
+        range: [0, 2, 0.2]
       limits:
         y: [0, 3]
     series:
-      - {type: hist, data: "./data_latency.csv", x: "latency", label: "Latency", bins: 20}
-  - axes: {xlabel: "x", ylabel: { show: false }, legend: {show: false}, title: {text: "Latency Title", show: true}}
+      - { type: hist, data: "./data_latency.csv", x: "latency", label: { text: "Latency", weight: normal } , bins: 20 }
+
+  # Panel 3: Line with visible title & hidden ylabel; label includes manual \textbf to ensure no double wrapping
+  - axes:
+      xlabel: { text: "x" }
+      ylabel: { show: false }
+      legend: { show: true, title: { text: "Line Legend", show: true } }
+      title: { text: "Latency Title", show: true, style: italic }
     series:
-      - {type: line, data: "./data_line.csv", x: "x", y: "y", label: "y vs x"}
-export: {path: "./fig_cdf_hist.png", formats: ["png"], dpi: 600}
+      - { type: line, data: "./data_line.csv", x: "x", y: "y", label: "\\textbf{y vs x}" }
+
+  # Panel 4: Custom tick labels & mixed text styles, math expression should remain untouched
+  - axes:
+      title: { text: "Custom Ticks", show: true }
+      xlabel: { text: "Index" }
+      ylabel: { text: "Value1", dx: -1, dx_unit: "axes" }
+      legend: { show: true, title: { text: "Legend Title", show: true }, labels: [ {text: "Plain"}, {text: "Italic", style: italic}, {text: "Already \\textbf{Bold}"} ], loc: "lower right" }
+      xticks:
+        locations: [0, 1, 2, 3]
+        labels:
+          - { text: "Zero" }
+          - { text: "One", style: italic }
+          - { text: "\\textbf{Two}" }        # already bold → no double wrap
+          - { text: "$x^2$" }                # math mode → untouched
+    series:
+      - { type: line, data: "./data_line.csv", x: "x", y: "y", label: { text: "Series 1", style: italic } }
+
+  # Panel 5: Overlays demonstration loaded from external file
+  - axes:
+      title: { text: "Overlays", show: true }
+      xlabel: { text: "Time (s)" }
+      ylabel: { text: "Value" }
+      legend: { show: true, loc: "upper right" }
+    series:
+      - { type: line, data: "./data_line.csv", x: "x", y: "y", label: "Baseline" }
+    overlays:
+      - "./overlay_data.json"
+
+export: { path: "./fig_cdf_hist.png", formats: ["png"], dpi: 600 }
